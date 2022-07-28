@@ -7,6 +7,7 @@ data JsonValue
     = JsonNull
     | JsonString String
     | JsonInt Int
+    | JsonFloat Float
     | JsonBool Bool
     | JsonArray [JsonValue]
     | JsonObject [(String, JsonValue)]
@@ -72,12 +73,16 @@ parseInt :: Parser JsonValue
 parseInt = f <$> notEmpty (parseSpan isDigit)
     where f digits = JsonInt $ read digits
 
+parseFloat :: Parser JsonValue
+parseFloat = f <$> parseInt <*> parseChar '.' <*> parseInt
+    where f (JsonInt i) _ (JsonInt f) = JsonFloat $ fromIntegral i + (fromIntegral f / 10 ^ length (show f))
+          f _ _ _ = undefined
+
 stringLiteral :: Parser String
 stringLiteral = parseChar '"' *> (parseSpan (/= '"')) <* parseChar '"'
 
 parseStringLiteral :: Parser JsonValue
 parseStringLiteral = JsonString <$> stringLiteral
-
 
 whitespace :: Parser String
 whitespace = parseSpan isSpace
@@ -89,14 +94,12 @@ parseArray :: Parser JsonValue
 parseArray = JsonArray <$> (parseChar '[' *> whitespace *> elements <* whitespace <*parseChar ']')
     where elements = separateBy (whitespace *> parseChar ',' *> whitespace) parseValue
 
-
-
 parseObject :: Parser JsonValue
 parseObject = JsonObject <$> (parseChar '{' *> whitespace *> separateBy (whitespace *> parseChar ',' <* whitespace) pair <* whitespace <* parseChar '}')
     where pair = (\key _ value -> (key, value)) <$> stringLiteral <*> (whitespace *> parseChar ':' <* whitespace) <*> parseValue
 
 parseValue :: Parser JsonValue
-parseValue = parseNull <|> parseBool <|> parseInt <|> parseStringLiteral <|> parseArray <|> parseObject
+parseValue = parseNull <|> parseBool <|> parseInt <|> parseFloat <|> parseStringLiteral <|> parseArray <|> parseObject
 
 parseFile :: FilePath -> Parser a -> IO (Maybe a)
 parseFile fileName parser = do
