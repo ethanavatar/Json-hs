@@ -4,7 +4,7 @@ A simple JSON parser written in Haskell.
 
 Inspired by [this video](https://www.youtube.com/watch?v=N9RUqGYuGfw) ([source](https://github.com/tsoding/haskell-json))
 
-I don't pretend to understand category theory. This was very difficult.
+I don't pretend to understand category theory. This was my first time using Haskell and it was very difficult.
 
 ## Usage
 
